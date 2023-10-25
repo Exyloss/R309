@@ -34,8 +34,10 @@ def new_tab(event=None):
     l1.grid(row=1, column=1)
     l2 = Label(win, text="Port : ", height=2)
     l2.grid(row=2, column=1)
-    l3 = Label(win, text="Topic : ", height=2)
+    l3 = Label(win, text="Username : ", height=2)
     l3.grid(row=3, column=1)
+    l4 = Label(win, text="Topic : ", height=2)
+    l4.grid(row=4, column=1)
 
     broker = Entry(win, width=20)
     broker.grid(row=1, column=2, padx=(0, 20))
@@ -45,40 +47,53 @@ def new_tab(event=None):
     port.grid(row=2, column=2, padx=(0, 20))
     port.insert(END, "1883")
 
-    topic = Entry(win, width=20)
-    topic.grid(row=3, column=2, padx=(0, 20))
+    user = Entry(win, width=20)
+    user.grid(row=3, column=2, padx=(0, 20))
+    user.insert(END, "tkclient")
 
-    create = Button(win, text="Créer", width=10, command=lambda topic_entry=topic, broker_entry=broker, port_entry=port, win=win : append_tab(topic_entry, broker_entry, port_entry, win))
-    create.grid(row=4, column=1, padx=(30, 0))
+    topic = Entry(win, width=20)
+    topic.grid(row=4, column=2, padx=(0, 20))
+
+    create = Button(win, text="Créer", width=10, command=
+                    lambda
+                        topic_entry=topic,
+                        broker_entry=broker,
+                        port_entry=port,
+                        user_entry=user,
+                        win=win :
+                        append_tab(topic_entry, broker_entry, port_entry, user_entry, win)
+                    )
+    create.grid(row=5, column=1, padx=(30, 0))
 
     cancel = Button(win, text="Annuler", width=10, command=win.destroy)
-    cancel.grid(row=4, column=2)
+    cancel.grid(row=5, column=2)
 
-def append_tab(topic_entry, broker_entry, port_entry, win=None):
+def append_tab(topic_entry, broker_entry, port_entry, user_entry, win=None):
     global tabs
     topic = topic_entry.get()
     port = int(port_entry.get())
     broker = broker_entry.get()
+    user = user_entry.get()
     entry.delete(0, END)
     tabs[topic] = { "win": ttk.Frame(tabControl) }
     tabControl.add(tabs[topic]["win"], text=topic)
 
-    tabs[topic]["result"] = Text(tabs[topic]["win"])
-    tabs[topic]["result"].pack()
+    tabs[topic]["result"] = Text(tabs[topic]["win"], width=50)
+    tabs[topic]["result"].grid(row=1, column=0, columnspan=2, padx=(0, 0))
     tabs[topic]["result"].config(state=DISABLED)
 
-    tabs[topic]["username"] = "exylos1"
+    tabs[topic]["user"] = user
     tabs[topic]["port"] = port
     tabs[topic]["broker"] = broker
 
-    tabs[topic]["entry"] = Entry(tabs[topic]["win"], width=40)
-    tabs[topic]["entry"].pack()
+    tabs[topic]["entry"] = Entry(tabs[topic]["win"], width=30)
+    tabs[topic]["entry"].grid(row=2, column=0, padx=(0, 0))
 
-    tabs[topic]["submit"] = Button(tabs[topic]["win"], text="Envoyer", width=40, command=lambda topic=topic : publish(topic))
-    tabs[topic]["submit"].pack()
+    tabs[topic]["submit"] = Button(tabs[topic]["win"], text="Envoyer", width=10, command=lambda topic=topic : publish(topic))
+    tabs[topic]["submit"].grid(row=2, column=1, padx=(0, 0))
 
-    tabs[topic]["export"] = Button(tabs[topic]["win"], text="Exporter les données", width=40, command=lambda topic=topic : export_logs(topic))
-    tabs[topic]["export"].pack()
+    tabs[topic]["export"] = Button(tabs[topic]["win"], text="Exporter les données", width=41, command=lambda topic=topic : export_logs(topic))
+    tabs[topic]["export"].grid(row=3, column=0, columnspan=2)
 
     tabs[topic]["closed"] = False
     tabs[topic]["logs"] = []
@@ -94,8 +109,6 @@ def destroy_tab(event):
     tabControl.forget(tabControl.select())
     if topic != "Accueil":
         tabs[topic]["closed"] = True
-    else:
-        root.destroy()
 
 def handle_fun(client, topic, data):
     global tabs
@@ -117,6 +130,7 @@ def publish(topic):
     client= mqtt_client.Client(tabs[topic]["username"]+"1")
     client.connect(tabs[topic]["broker"], tabs[topic]["port"])
     client.publish(topic, text)
+    tabs[topic]["entry"].delete(0, END)
     client.disconnect()
 
 def export_logs(topic):
@@ -133,7 +147,7 @@ def export_logs(topic):
 
 root = Tk()
 root.title("Tkinter")
-root.geometry("400x600")
+root.geometry("350x510")
 
 tabControl = ttk.Notebook(root)
 tabControl.pack(expand=1, fill="both")
