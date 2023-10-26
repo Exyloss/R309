@@ -127,7 +127,7 @@ def handle_fun(client, topic, data):
 def publish(topic):
     text = tabs[topic]["entry"].get()
     print(topic+" : "+text)
-    client= mqtt_client.Client(tabs[topic]["username"]+"1")
+    client= mqtt_client.Client(tabs[topic]["user"]+"1")
     client.connect(tabs[topic]["broker"], tabs[topic]["port"])
     client.publish(topic, text)
     tabs[topic]["entry"].delete(0, END)
@@ -139,7 +139,7 @@ def export_logs(topic):
     f = open(name, "w")
     if name.split(".")[-1] == "txt":
         for i in data:
-            f.write(i)
+            f.write(i+"\n")
     elif name.split(".")[-1] == "json":
         f.write(json.dumps(data))
     f.close()
@@ -158,13 +158,40 @@ fen.pack(side="bottom", fill="x")
 
 tabControl.add(fen, text="Accueil")
 
-submit = Button(fen, text="Créer le topic", width=40)
-submit.pack(side="bottom")
+aide = Text(fen, width=50, height=15)
+aide.grid(row=0, column=0, rowspan=2, columnspan=2, pady=(0, 50))
 
-entry = Entry(fen, width=40)
-entry.pack(side="bottom")
+help_file = open("help.txt", "r")
+for i in help_file.readlines():
+    aide.insert(END, i)
+help_file.close()
 
-submit["command"] = lambda entry=entry : append_tab(entry)
+l1 = Label(fen, text="Broker :", width=10)
+l1.grid(row=2, column=0, pady=(0, 10))
+l2 = Label(fen, text="Port :", width=10)
+l2.grid(row=3, column=0, pady=(0, 10))
+l3 = Label(fen, text="Username :", width=10)
+l3.grid(row=4, column=0, pady=(0, 10))
+l4 = Label(fen, text="Topic :", width=10)
+l4.grid(row=5, column=0, pady=(0, 10))
+
+broker = Entry(fen, width=27)
+broker.grid(row=2, column=1)
+broker.insert(END, "test.mosquitto.org")
+
+port = Entry(fen, width=27)
+port.grid(row=3, column=1)
+port.insert(END, "1883")
+
+user = Entry(fen, width=27)
+user.grid(row=4, column=1)
+user.insert(END, "tkclient")
+
+topic = Entry(fen, width=27)
+topic.grid(row=5, column=1)
+
+submit = Button(fen, text="Créer le topic", width=37, command=lambda topic=topic : publish(topic))
+submit.grid(row=6, column=0, columnspan=2)
 
 
 root.bind("<Control-t>", new_tab)

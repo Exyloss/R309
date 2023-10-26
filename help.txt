@@ -1,0 +1,4 @@
+Raccourcis :
+
+<Ctrl-t> : Créer un nouvel onglet
+<Ctrl-w> : Fermer l'onglet sélectionné
