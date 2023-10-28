@@ -128,7 +128,7 @@ def handle_fun(client, topic, data):
 def publish(topic):
     text = tabs[topic]["entry"].get()
     print("published -> "+topic+" : "+text)
-    client = mqtt_client.Client(tabs[topic]["user"]+"1")
+    client = mqtt_client.Client(tabs[topic]["user"]+"_publish")
     client.connect(tabs[topic]["broker"], tabs[topic]["port"])
     client.publish(topic, text)
     tabs[topic]["entry"].delete(0, END)
