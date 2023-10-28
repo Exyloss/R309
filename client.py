@@ -15,7 +15,7 @@ def subscribe(client: mqtt_client, handle_fun, topic):
     print(topic+" : up")
     def on_message(client, userdata, msg):
         s = str(msg.payload.decode("utf-8"))
-        print(msg.topic+" : "+s)
+        print("received -> "+msg.topic+" : "+s)
         handle_fun(client, msg.topic, s)
 
     client.subscribe(topic)
@@ -74,7 +74,7 @@ def append_tab(topic_entry, broker_entry, port_entry, user_entry, win=None):
     port = int(port_entry.get())
     broker = broker_entry.get()
     user = user_entry.get()
-    entry.delete(0, END)
+    print((topic, port, broker, user))
     tabs[topic] = { "win": ttk.Frame(tabControl) }
     tabControl.add(tabs[topic]["win"], text=topic)
 
@@ -98,10 +98,11 @@ def append_tab(topic_entry, broker_entry, port_entry, user_entry, win=None):
     tabs[topic]["closed"] = False
     tabs[topic]["logs"] = []
 
-    client_id = "exylos1"
-    tabs[topic]["thread"] = _thread.start_new_thread(run_mqtt, (handle_fun, client_id, topic, broker, port))
+    tabs[topic]["thread"] = _thread.start_new_thread(run_mqtt, (handle_fun, user, topic, broker, port))
     if win != None:
         win.destroy()
+    else:
+        topic_entry.delete(0, END)
 
 def destroy_tab(event):
     global tabs
@@ -126,8 +127,8 @@ def handle_fun(client, topic, data):
 
 def publish(topic):
     text = tabs[topic]["entry"].get()
-    print(topic+" : "+text)
-    client= mqtt_client.Client(tabs[topic]["user"]+"1")
+    print("published -> "+topic+" : "+text)
+    client = mqtt_client.Client(tabs[topic]["user"]+"1")
     client.connect(tabs[topic]["broker"], tabs[topic]["port"])
     client.publish(topic, text)
     tabs[topic]["entry"].delete(0, END)
@@ -190,8 +191,16 @@ user.insert(END, "tkclient")
 topic = Entry(fen, width=27)
 topic.grid(row=5, column=1)
 
-submit = Button(fen, text="Créer le topic", width=37, command=lambda topic=topic : publish(topic))
-submit.grid(row=6, column=0, columnspan=2)
+create = Button(fen, text="Créer le topic", width=37, command=lambda
+                        topic_entry=topic,
+                        broker_entry=broker,
+                        port_entry=port,
+                        user_entry=user,
+                        :
+                        append_tab(topic_entry, broker_entry, port_entry, user_entry)
+                    )
+
+create.grid(row=6, column=0, columnspan=2)
 
 
 root.bind("<Control-t>", new_tab)
