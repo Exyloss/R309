@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 from tkinter import *
-from tkinter import filedialog
-from tkinter import ttk
+from tkinter import filedialog, ttk
 import _thread
 from paho.mqtt import client as mqtt_client
 import json
@@ -10,18 +9,29 @@ from datetime import datetime
 
 default_broker = 'test.mosquitto.org'
 default_port = 1883
+default_user = "tkclient"
+n = 0
 
 def subscribe(client: mqtt_client, handle_fun, topic):
     print(topic+" : up")
     def on_message(client, userdata, msg):
+        """
+        Lorsqu'un message MQTT est reçu par le thread:
+        """
         s = str(msg.payload.decode("utf-8"))
         print("received -> "+msg.topic+" : "+s)
+        # On envoi le client, le topic et le contenu du message dans
+        # la fonction handle_fun
         handle_fun(client, msg.topic, s)
 
     client.subscribe(topic)
+    # on définit la fonction à exécuter en cas de réception d'un message:
     client.on_message = on_message
 
 def run_mqtt(fun, client_id, topic, broker, port):
+    """
+    Fonction configurant le client MQTT au lancement du thread
+    """
     client = mqtt_client.Client(client_id)
     client.connect(broker, port)
     subscribe(client, fun, topic)
@@ -49,11 +59,13 @@ def new_tab(event=None):
 
     user = Entry(win, width=20)
     user.grid(row=3, column=2, padx=(0, 20))
-    user.insert(END, "tkclient")
+    user.insert(END, default_user+str(n))
 
     topic = Entry(win, width=20)
     topic.grid(row=4, column=2, padx=(0, 20))
 
+    # L'action de ce bouton sera l'execution de la fonction append_tab
+    # avec les paramètres adéquat
     create = Button(win, text="Créer", width=10, command=
                     lambda
                         topic_entry=topic,
@@ -69,23 +81,34 @@ def new_tab(event=None):
     cancel.grid(row=5, column=2)
 
 def append_tab(topic_entry, broker_entry, port_entry, user_entry, win=None):
-    global tabs
+    """
+    Fonction permettant de créer un nouvel onglet et un nouveau thread MQTT
+    *_entry: Entrée contenant la valeur du *
+    """
+    global tabs, n
     topic = topic_entry.get()
     port = int(port_entry.get())
     broker = broker_entry.get()
     user = user_entry.get()
     print((topic, port, broker, user))
-    tabs[topic] = { "win": ttk.Frame(tabControl) }
+    tabs[topic] = { "win": Frame(tabControl) }
     tabControl.add(tabs[topic]["win"], text=topic)
 
+    # result sera le champ texte dans lequel il y aura les messages reçus
     tabs[topic]["result"] = Text(tabs[topic]["win"], width=50)
     tabs[topic]["result"].grid(row=1, column=0, columnspan=2, padx=(0, 0))
     tabs[topic]["result"].config(state=DISABLED)
 
     tabs[topic]["user"] = user
+    if user == default_user+str(n):
+        n += 1
+        user_entry.delete(0, END)
+        user_entry.insert(END, default_user+str(n))
+
     tabs[topic]["port"] = port
     tabs[topic]["broker"] = broker
 
+    # Entrée contenant le message que l'utilisateur souhaite envoyer
     tabs[topic]["entry"] = Entry(tabs[topic]["win"], width=30)
     tabs[topic]["entry"].grid(row=2, column=0, padx=(0, 0))
 
@@ -96,8 +119,11 @@ def append_tab(topic_entry, broker_entry, port_entry, user_entry, win=None):
     tabs[topic]["export"].grid(row=3, column=0, columnspan=2)
 
     tabs[topic]["closed"] = False
+
+    # Variable contenant les logs MQTT pour le topic créé
     tabs[topic]["logs"] = []
 
+    # On stocke l'identifiant du thread dans un variable et on le lance
     tabs[topic]["thread"] = _thread.start_new_thread(run_mqtt, (handle_fun, user, topic, broker, port))
     if win != None:
         win.destroy()
@@ -112,20 +138,31 @@ def destroy_tab(event):
         tabs[topic]["closed"] = True
 
 def handle_fun(client, topic, data):
+    """
+    Fonction traitant les données reçues par le client MQTT
+    """
     global tabs
     if tabs[topic]["closed"]:
+        # Si le topic est marqué comme étant fermé,
+        # on ferme le client et le thread associé
         client.disconnect()
         tabs.pop(topic)
         _thread.exit()
     recept = ""
     now = datetime.now()
+    # On formate la date
     current_time = now.strftime("Le %d/%m/%y à %H:%M:%S : ")
+    # On ajoute aux logs le message reçu
     tabs[topic]["logs"].append(data)
     tabs[topic]["result"].config(state=NORMAL)
+    # On insère au champ de texte le message et la date
     tabs[topic]["result"].insert(END, current_time+data+"\n")
     tabs[topic]["result"].config(state=DISABLED)
 
 def publish(topic):
+    """
+    Publier un message sur un topic
+    """
     text = tabs[topic]["entry"].get()
     print("published -> "+topic+" : "+text)
     client = mqtt_client.Client(tabs[topic]["user"]+"_publish")
@@ -135,13 +172,19 @@ def publish(topic):
     client.disconnect()
 
 def export_logs(topic):
-    name = filedialog.asksaveasfilename(filetypes=[("Format JSON", "*.json"),("Texte brut", "*.txt")])
+    # Fonction Tkinter permettant de demander à l'utilisateur de créer
+    # un nouveau fichier
+    name = filedialog.asksaveasfilename(filetypes=[
+            ("Format JSON", "*.json"),
+            ("Texte brut", "*.txt")
+        ]
+    )
     data = tabs[topic]["logs"]
     f = open(name, "w")
-    if name.split(".")[-1] == "txt":
+    if name.split(".")[-1] == "txt": # Si l'utilisateur a sélectionné texte brut
         for i in data:
             f.write(i+"\n")
-    elif name.split(".")[-1] == "json":
+    elif name.split(".")[-1] == "json": # Si l'utilisateur a sélectionné JSON
         f.write(json.dumps(data))
     f.close()
 
@@ -152,9 +195,11 @@ root.geometry("350x510")
 
 tabControl = ttk.Notebook(root)
 tabControl.pack(expand=1, fill="both")
+# tabs est un dictionnaire contenant les différents widgets créés pour chaque
+# topic, ainsi que les informations supplémentaires.
 tabs = {}
 
-fen = ttk.Frame(root, width=1000)
+fen = Frame(root, width=1000)
 fen.pack(side="bottom", fill="x")
 
 tabControl.add(fen, text="Accueil")
@@ -166,6 +211,7 @@ help_file = open("help.txt", "r")
 for i in help_file.readlines():
     aide.insert(END, i)
 help_file.close()
+aide.config(state=DISABLED)
 
 l1 = Label(fen, text="Broker :", width=10)
 l1.grid(row=2, column=0, pady=(0, 10))
@@ -186,7 +232,7 @@ port.insert(END, "1883")
 
 user = Entry(fen, width=27)
 user.grid(row=4, column=1)
-user.insert(END, "tkclient")
+user.insert(END, default_user+str(n))
 
 topic = Entry(fen, width=27)
 topic.grid(row=5, column=1)
