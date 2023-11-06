@@ -3,39 +3,15 @@
 from tkinter import *
 from tkinter import filedialog, ttk
 import _thread
-from paho.mqtt import client as mqtt_client
 import json
 from datetime import datetime
+from mosquitto import *
 
 default_broker = 'test.mosquitto.org'
 default_port = 1883
 default_user = "tkclient"
 n = 0
 
-def subscribe(client: mqtt_client, handle_fun, topic):
-    print(topic+" : up")
-    def on_message(client, userdata, msg):
-        """
-        Lorsqu'un message MQTT est reçu par le thread:
-        """
-        s = str(msg.payload.decode("utf-8"))
-        print("received -> "+msg.topic+" : "+s)
-        # On envoi le client, le topic et le contenu du message dans
-        # la fonction handle_fun
-        handle_fun(client, msg.topic, s)
-
-    client.subscribe(topic)
-    # on définit la fonction à exécuter en cas de réception d'un message:
-    client.on_message = on_message
-
-def run_mqtt(fun, client_id, topic, broker, port):
-    """
-    Fonction configurant le client MQTT au lancement du thread
-    """
-    client = mqtt_client.Client(client_id)
-    client.connect(broker, port)
-    subscribe(client, fun, topic)
-    client.loop_forever()
 
 def new_tab(event=None):
     win = Toplevel(root)
@@ -110,18 +86,18 @@ def append_tab(topic_entry, broker_entry, port_entry, user_entry, win=None):
 
     # Entrée contenant le message que l'utilisateur souhaite envoyer
     tabs[topic]["entry"] = Entry(tabs[topic]["win"], width=40)
-    tabs[topic]["entry"].grid(row=2, column=0, padx=(0, 0))
+    tabs[topic]["entry"].grid(row=3, column=0, padx=(0, 0))
 
     submit_button = Button(tabs[topic]["win"], text="Envoyer", width=10, command=lambda topic=topic : publish(topic))
-    submit_button.grid(row=2, column=1, padx=(0, 0))
+    submit_button.grid(row=3, column=1, padx=(0, 0))
 
     export_button = Button(tabs[topic]["win"], text="Exporter les données", width=55, command=lambda topic=topic : export_logs(topic))
-    export_button.grid(row=3, column=0, columnspan=2)
+    export_button.grid(row=4, column=0, columnspan=2)
 
     tabs[topic]["closed"] = False
 
     exit_button = Button(tabs[topic]["win"], text="Quitter", width=55, command=destroy_tab)
-    exit_button.grid(row=4, column=0, columnspan=2)
+    exit_button.grid(row=5, column=0, columnspan=2)
 
     # Variable contenant les logs MQTT pour le topic créé
     tabs[topic]["logs"] = []
