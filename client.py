@@ -95,7 +95,7 @@ def append_tab(topic_entry, broker_entry, port_entry, user_entry, win=None):
     tabControl.add(tabs[topic]["win"], text=topic)
 
     # result sera le champ texte dans lequel il y aura les messages reçus
-    tabs[topic]["result"] = Text(tabs[topic]["win"], width=50)
+    tabs[topic]["result"] = Text(tabs[topic]["win"], width=70)
     tabs[topic]["result"].grid(row=1, column=0, columnspan=2, padx=(0, 0))
     tabs[topic]["result"].config(state=DISABLED)
 
@@ -109,18 +109,18 @@ def append_tab(topic_entry, broker_entry, port_entry, user_entry, win=None):
     tabs[topic]["broker"] = broker
 
     # Entrée contenant le message que l'utilisateur souhaite envoyer
-    tabs[topic]["entry"] = Entry(tabs[topic]["win"], width=30)
+    tabs[topic]["entry"] = Entry(tabs[topic]["win"], width=40)
     tabs[topic]["entry"].grid(row=2, column=0, padx=(0, 0))
 
     submit_button = Button(tabs[topic]["win"], text="Envoyer", width=10, command=lambda topic=topic : publish(topic))
     submit_button.grid(row=2, column=1, padx=(0, 0))
 
-    export_button = Button(tabs[topic]["win"], text="Exporter les données", width=41, command=lambda topic=topic : export_logs(topic))
+    export_button = Button(tabs[topic]["win"], text="Exporter les données", width=55, command=lambda topic=topic : export_logs(topic))
     export_button.grid(row=3, column=0, columnspan=2)
 
     tabs[topic]["closed"] = False
 
-    exit_button = Button(tabs[topic]["win"], text="Quitter", width=41, command=destroy_tab)
+    exit_button = Button(tabs[topic]["win"], text="Quitter", width=55, command=destroy_tab)
     exit_button.grid(row=4, column=0, columnspan=2)
 
     # Variable contenant les logs MQTT pour le topic créé
@@ -196,7 +196,7 @@ def export_logs(topic):
 
 root = Tk()
 root.title("Tkinter")
-root.geometry("350x540")
+root.geometry("500x540")
 
 tabControl = ttk.Notebook(root)
 tabControl.pack(expand=1, fill="both")
@@ -209,7 +209,7 @@ fen.pack(side="bottom", fill="x")
 
 tabControl.add(fen, text="Accueil")
 
-aide = Text(fen, width=50, height=15)
+aide = Text(fen, width=70, height=15)
 aide.grid(row=0, column=0, rowspan=2, columnspan=2, pady=(0, 50))
 
 help_file = open("help.txt", "r")
@@ -227,22 +227,22 @@ l3.grid(row=4, column=0, pady=(0, 10))
 l4 = Label(fen, text="Topic :", width=10)
 l4.grid(row=5, column=0, pady=(0, 10))
 
-broker = Entry(fen, width=27)
+broker = Entry(fen, width=45)
 broker.grid(row=2, column=1)
 broker.insert(END, "test.mosquitto.org")
 
-port = Entry(fen, width=27)
+port = Entry(fen, width=45)
 port.grid(row=3, column=1)
 port.insert(END, "1883")
 
-user = Entry(fen, width=27)
+user = Entry(fen, width=45)
 user.grid(row=4, column=1)
 user.insert(END, default_user+str(n))
 
-topic = Entry(fen, width=27)
+topic = Entry(fen, width=45)
 topic.grid(row=5, column=1)
 
-create = Button(fen, text="Créer le topic", width=41, command=lambda
+create = Button(fen, text="Créer le topic", width=55, command=lambda
                         topic_entry=topic,
                         broker_entry=broker,
                         port_entry=port,
@@ -253,7 +253,7 @@ create = Button(fen, text="Créer le topic", width=41, command=lambda
 
 create.grid(row=6, column=0, columnspan=2)
 
-exit_button = Button(fen, text="Quitter", width=41, command=quit)
+exit_button = Button(fen, text="Quitter", width=55, command=quit)
 exit_button.grid(row=7, column=0, columnspan=2)
 
 root.bind("<Control-t>", new_tab)
