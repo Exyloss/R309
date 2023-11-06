@@ -152,8 +152,10 @@ def handle_fun(client, topic, data):
     now = datetime.now()
     # On formate la date
     current_time = now.strftime("Le %d/%m/%y à %H:%M:%S : ")
+    now = datetime.now()
+    log_time = now.strftime("%y-%m-%d;%H:%M:%S")
     # On ajoute aux logs le message reçu
-    tabs[topic]["logs"].append(data)
+    tabs[topic]["logs"].append({"topic": topic, "data": data, "time": log_time})
     tabs[topic]["result"].config(state=NORMAL)
     # On insère au champ de texte le message et la date
     tabs[topic]["result"].insert(END, current_time+data+"\n")
@@ -183,7 +185,7 @@ def export_logs(topic):
     f = open(name, "w")
     if name.split(".")[-1] == "txt": # Si l'utilisateur a sélectionné texte brut
         for i in data:
-            f.write(i+"\n")
+            f.write(topic+";"+i["time"]+";"+i["data"]+"\n")
     elif name.split(".")[-1] == "json": # Si l'utilisateur a sélectionné JSON
         f.write(json.dumps(data))
     f.close()
