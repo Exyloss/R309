@@ -112,13 +112,16 @@ def append_tab(topic_entry, broker_entry, port_entry, user_entry, win=None):
     tabs[topic]["entry"] = Entry(tabs[topic]["win"], width=30)
     tabs[topic]["entry"].grid(row=2, column=0, padx=(0, 0))
 
-    tabs[topic]["submit"] = Button(tabs[topic]["win"], text="Envoyer", width=10, command=lambda topic=topic : publish(topic))
-    tabs[topic]["submit"].grid(row=2, column=1, padx=(0, 0))
+    submit_button = Button(tabs[topic]["win"], text="Envoyer", width=10, command=lambda topic=topic : publish(topic))
+    submit_button.grid(row=2, column=1, padx=(0, 0))
 
-    tabs[topic]["export"] = Button(tabs[topic]["win"], text="Exporter les données", width=41, command=lambda topic=topic : export_logs(topic))
-    tabs[topic]["export"].grid(row=3, column=0, columnspan=2)
+    export_button = Button(tabs[topic]["win"], text="Exporter les données", width=41, command=lambda topic=topic : export_logs(topic))
+    export_button.grid(row=3, column=0, columnspan=2)
 
     tabs[topic]["closed"] = False
+
+    exit_button = Button(tabs[topic]["win"], text="Quitter", width=41, command=destroy_tab)
+    exit_button.grid(row=4, column=0, columnspan=2)
 
     # Variable contenant les logs MQTT pour le topic créé
     tabs[topic]["logs"] = []
@@ -130,7 +133,7 @@ def append_tab(topic_entry, broker_entry, port_entry, user_entry, win=None):
     else:
         topic_entry.delete(0, END)
 
-def destroy_tab(event):
+def destroy_tab(event=None):
     global tabs
     topic = tabControl.tab(tabControl.select(), "text")
     tabControl.forget(tabControl.select())
@@ -193,7 +196,7 @@ def export_logs(topic):
 
 root = Tk()
 root.title("Tkinter")
-root.geometry("350x510")
+root.geometry("350x540")
 
 tabControl = ttk.Notebook(root)
 tabControl.pack(expand=1, fill="both")
@@ -239,7 +242,7 @@ user.insert(END, default_user+str(n))
 topic = Entry(fen, width=27)
 topic.grid(row=5, column=1)
 
-create = Button(fen, text="Créer le topic", width=37, command=lambda
+create = Button(fen, text="Créer le topic", width=41, command=lambda
                         topic_entry=topic,
                         broker_entry=broker,
                         port_entry=port,
@@ -250,6 +253,8 @@ create = Button(fen, text="Créer le topic", width=37, command=lambda
 
 create.grid(row=6, column=0, columnspan=2)
 
+exit_button = Button(fen, text="Quitter", width=41, command=quit)
+exit_button.grid(row=7, column=0, columnspan=2)
 
 root.bind("<Control-t>", new_tab)
 root.bind("<Control-w>", destroy_tab)
